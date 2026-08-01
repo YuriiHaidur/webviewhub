@@ -4,6 +4,8 @@ Run web apps as native Windows windows — each in its own window, with its own
 tray icon, hotkey and login session. Built on WebView2, so there is no bundled
 Chromium: the app reuses the Edge runtime that ships with Windows.
 
+![The hub, listing configured services with their hotkeys and integrations](assets/hub.png)
+
 > **Status:** personal project, published as-is. It works well enough for daily
 > use, but there is no installer, no release pipeline and no support promise.
 >
