@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RootNamespace>WebViewHub</RootNamespace>
+    <Version>0.1.0</Version>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <AssemblyName>WebViewHub</AssemblyName>
+    <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>
+    <!-- IconHelper.NormalizeIcon scans 1M+ pixels via LockBits +
+         pointer walk for speed (GetPixel/SetPixel is ~100× slower). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Sibling projects (tests, WinUI3 experiments) live under this root.
+         Exclude their sources, pages, and resources from the main project's
+         default item discovery so they don't leak into the build. -->
+    <Compile Remove="WebViewHub.Tests\**" />
+    <Page Remove="WebViewHub.Tests\**" />
+    <Resource Remove="WebViewHub.Tests\**" />
+    <None Remove="WebViewHub.Tests\**" />
+    <Compile Remove="WebViewHub.SettingsHost\**" />
+    <Page Remove="WebViewHub.SettingsHost\**" />
+    <Resource Remove="WebViewHub.SettingsHost\**" />
+    <None Remove="WebViewHub.SettingsHost\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.0.124" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2792.45" />
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\AppIcon.png" />
+    <Resource Include="Resources\AppIcon.ico" />
+    <!-- macOS-accurate squircle mask (1024×1024 RGBA PNG) borrowed from
+         rikumi/iconsur (MIT) and used as the canonical clip in
+         IconHelper.NormalizeIcon. Replaces the math-approximated rounded
+         rectangle with Apple's continuous-curvature superellipse. -->
+    <Resource Include="Resources\SquircleMask.png" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,140 @@
+<Page x:Class="WebViewHub.Windows.Pages.TweaksPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="Tweaks"
+      d:DesignHeight="450" d:DesignWidth="800"
+      ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+      ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+      mc:Ignorable="d">
+    <ui:DynamicScrollViewer VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="42">
+            <ui:TextBlock FontTypography="Title" Text="Tweaks" />
+            <ui:TextBlock FontTypography="Body"
+                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                          Text="Custom CSS injected on every page load"
+                          Margin="0,4,0,24" />
+
+            <!-- Master toggle card. CSS textarea below is disabled when off. -->
+            <ui:CardControl Margin="0,0,0,4" Icon="{ui:SymbolIcon PaintBrush24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="Enable custom CSS" />
+                        <ui:TextBlock FontTypography="Caption"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      TextWrapping="Wrap"
+                                      Text="Injects the rules below via &lt;style&gt; on every navigation. Re-paste from userstyles.world / Stylus, or write your own." />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding CustomCssEnabled, Mode=TwoWay}" />
+            </ui:CardControl>
+
+            <!-- Dark-theme-only gate. Useful when the CSS is a dark redesign
+                 (e.g. Google Translate) — auto-disables itself when the user
+                 switches Windows back to a light theme. Disabled when the
+                 master toggle is off. -->
+            <ui:CardControl Margin="0,4,0,4"
+                            Icon="{ui:SymbolIcon WeatherMoon24}"
+                            IsEnabled="{Binding CustomCssEnabled}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="Apply only in dark theme" />
+                        <ui:TextBlock FontTypography="Caption"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      TextWrapping="Wrap"
+                                      Text="Inject the CSS only while Windows is in dark mode. In light mode the style is removed and the page renders unmodified." />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding CustomCssOnlyInDarkTheme, Mode=TwoWay}" />
+            </ui:CardControl>
+
+            <!-- CSS body. Plain TextBox (not ui:TextBox) to allow newlines /
+                 tab character and a wide monospace area. IsEnabled tracks the
+                 master toggle so disabled state visually communicates "stored
+                 but inactive". -->
+            <Border Margin="0,8,0,0"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="CSS rules" Margin="0,0,0,6" />
+                    <TextBox Text="{Binding CustomCss, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             IsEnabled="{Binding CustomCssEnabled}"
+                             AcceptsReturn="True"
+                             AcceptsTab="True"
+                             TextWrapping="NoWrap"
+                             HorizontalScrollBarVisibility="Auto"
+                             VerticalScrollBarVisibility="Auto"
+                             MinHeight="280"
+                             FontFamily="Cascadia Code, Consolas, Courier New"
+                             FontSize="12"
+                             SpellCheck.IsEnabled="False" />
+                    <ui:TextBlock FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                  TextWrapping="Wrap"
+                                  Margin="0,8,0,0"
+                                  Text="Paste UserCSS from userstyles.world / Stylus as-is — the @-moz-document wrapper is stripped automatically. The service window reloads on Save so the rules take effect immediately." />
+                </StackPanel>
+            </Border>
+
+            <!-- Virtual-host mapping for local-file services.
+                 Maps a local folder to https://<host>/ via WebView2's
+                 SetVirtualHostNameToFolderMapping so file:// CORS doesn't
+                 block fetch() to sibling JSONs. Both fields must be set
+                 + folder must exist on disk; otherwise mapping is skipped
+                 silently. -->
+            <ui:TextBlock FontTypography="Subtitle"
+                          Text="Local folder hosting"
+                          Margin="0,32,0,4" />
+            <ui:TextBlock FontTypography="Caption"
+                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                          TextWrapping="Wrap"
+                          Margin="0,0,0,12"
+                          Text="Serve a local folder as https://&lt;host&gt;/ so the page can fetch() sibling JSON/data files. Without this, file:// pages can't read local files due to CORS. Leave both empty for normal web services." />
+
+            <ui:CardControl Margin="0,0,0,4" Icon="{ui:SymbolIcon Globe24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="Virtual host name" />
+                        <ui:TextBlock FontTypography="Caption"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      TextWrapping="Wrap"
+                                      Text="Hostname the service will load under (e.g. hub.local). The URL field above should then start with https://&lt;this host&gt;/." />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:TextBox Text="{Binding VirtualHostName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            PlaceholderText="hub.local"
+                            MinWidth="220" />
+            </ui:CardControl>
+
+            <ui:CardControl Margin="0,4,0,4" Icon="{ui:SymbolIcon Folder24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="Local folder path" />
+                        <ui:TextBlock FontTypography="Caption"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      TextWrapping="Wrap"
+                                      Text="Absolute folder to serve. Map the project ROOT, not a subfolder — the mapping cannot escape it (no .. resolution)." />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <StackPanel Orientation="Horizontal">
+                    <ui:TextBox x:Name="LocalFolderPathBox"
+                                Text="{Binding LocalFolderPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                PlaceholderText="C:\path\to\project"
+                                MinWidth="320"
+                                Margin="0,0,8,0" />
+                    <ui:Button Content="Browse…"
+                               Appearance="Secondary"
+                               Icon="{ui:SymbolIcon FolderOpen24}"
+                               Click="BrowseLocalFolder_Click" />
+                </StackPanel>
+            </ui:CardControl>
+        </StackPanel>
+    </ui:DynamicScrollViewer>
+</Page>

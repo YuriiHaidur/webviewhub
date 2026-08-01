@@ -1,0 +1,54 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET
+*.pdb
+*.cache
+*.dll.config
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Publish output
+publish/
+*.pubxml.user
+
+# Third-party sources kept locally for reference (H.NotifyIcon, WPF-UI).
+# Not ours to redistribute and not needed to build.
+output/
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+
+# Logs / runtime data the app writes near the exe in portable mode
+logs/
+*.log
+Data/
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Claude Code per-machine settings (project settings.json is committed if present)
+.claude/settings.local.json
+# Per-agent worktrees created by Claude Code subagent runs — local scratch only.
+.claude/worktrees/
+
+# Phantom dir from a misfired `mkdir {Models,...}` — keep ignored so it
+# doesn't accidentally get tracked. Safe to delete from disk manually.
+{Models,Services,Helpers,Windows,Resources}/

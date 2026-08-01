@@ -1,0 +1,287 @@
+<ui:FluentWindow x:Class="WebViewHub.Windows.HubWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="WebViewHub"
+        x:Name="HubRoot"
+        Height="770" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        WindowBackdropType="Mica"
+        ExtendsContentIntoTitleBar="True"
+        FontFamily="Segoe UI Variable, Segoe UI" FontSize="13">
+
+    <ui:FluentWindow.Resources>
+        <!-- Floating metadata pill positioned on top of the per-tile
+             gradient header. Uses Fluent LayerFillColorDefaultBrush
+             (designed for translucent overlays on Acrylic/Mica) so the
+             gradient colour and Mica backdrop blend through. Text stays
+             at the primary tier — needs solid contrast against varying
+             coloured gradients beneath. -->
+        <Style x:Key="HubTileBadge" TargetType="Border">
+            <Setter Property="CornerRadius" Value="4" />
+            <!-- Asymmetric vertical padding (top=1, bottom=3) compensates
+                 for Segoe UI Variable's line-box metrics: the glyph cap-
+                 height area sits in the upper portion of the line-box, so
+                 equal top/bottom padding (6,2) renders the perceived text
+                 closer to the bottom edge. 1/3 split rebalances the
+                 visible gap above/below the glyphs. -->
+            <Setter Property="Padding" Value="6,1,6,3" />
+            <Setter Property="Margin" Value="0,0,4,4" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+            <Setter Property="Background" Value="{DynamicResource LayerFillColorDefaultBrush}" />
+        </Style>
+        <!-- Stronger-than-Tertiary subtle text. Wpf.Ui's Tertiary token is
+             45% black in Light theme — too washed against the card-bg
+             plate, hard to read at FontSize 11. This brush keeps the
+             theme-aware Secondary colour (#9E light / #C5 dark) but dials
+             it back via Opacity, landing roughly between Tertiary and
+             Secondary. Used for the URL subtitle and every meta-badge. -->
+        <SolidColorBrush x:Key="HubTileSubtleTextBrush"
+                         Color="{DynamicResource TextFillColorSecondary}"
+                         Opacity="0.80" />
+
+        <Style x:Key="HubTileBadgeText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource HubTileSubtleTextBrush}" />
+        </Style>
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title bar -->
+        <ui:TitleBar Grid.Row="0" x:Name="HubTitleBar" Title="WebViewHub">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Resources/AppIcon.png" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <!-- Header -->
+        <Grid Grid.Row="1" Margin="24,12,24,12">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="BrandTitle" Text="WebViewHub" FontSize="22" FontWeight="SemiBold" />
+                <TextBlock Text="Manage your web apps"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                           FontSize="12" Margin="0,2,0,0" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <!-- Icon-only command button. Wpf.Ui's Button template hard-codes
+                     ButtonBackgroundPointerOver (≈ControlFillColorSecondary) as
+                     the hover bg regardless of Appearance — on Mica that
+                     reads as a "white plate". Override the resource locally
+                     to SubtleFillColor*, which is the Fluent design token
+                     for subtle command-style hovers (HyperlinkButton uses it).
+                     MinHeight/Padding match the neighbouring text button. -->
+                <ui:Button Appearance="Transparent"
+                           Icon="{ui:SymbolIcon Settings24}"
+                           ToolTip="Hub settings"
+                           Click="HubSettings_Click"
+                           MinHeight="32"
+                           Padding="8,0"
+                           Margin="0,0,8,0">
+                    <ui:Button.Resources>
+                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver"
+                                         Color="{DynamicResource SubtleFillColorSecondary}" />
+                        <SolidColorBrush x:Key="ButtonBackgroundPressed"
+                                         Color="{DynamicResource SubtleFillColorTertiary}" />
+                    </ui:Button.Resources>
+                </ui:Button>
+                <ui:Button Appearance="Primary"
+                           Icon="{ui:SymbolIcon Add24}"
+                           Content="Add service"
+                           Click="AddService_Click" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Services grid -->
+        <ui:DynamicScrollViewer Grid.Row="2" x:Name="ServicesScrollViewer"
+                                VerticalScrollBarVisibility="Auto"
+                                HorizontalScrollBarVisibility="Disabled"
+                                PreviewMouseWheel="ServicesScrollViewer_PreviewMouseWheel"
+                                Padding="24,0,24,12">
+            <StackPanel>
+                <ItemsControl x:Name="ServicesList">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" Loaded="ItemsPanel_Loaded" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- Tile design — Microsoft "Windows App" style:
+                                 • Large CornerRadius (14).
+                                 • Gradient covers the WHOLE card (icon + bottom plate).
+                                   The bottom plate is a translucent overlay so the
+                                   gradient softly bleeds under the name/URL area —
+                                   matches the reference where each tile is a tinted
+                                   glass slab from top to bottom.
+                                 • Tag chips float in the top-left over the gradient.
+                                 • Whole card is clickable to open the service. -->
+                            <Border MinWidth="220"
+                                    Margin="0,0,12,12"
+                                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="14"
+                                    ClipToBounds="True"
+                                    VerticalAlignment="Top"
+                                    HorizontalAlignment="Stretch"
+                                    Cursor="Hand"
+                                    Tag="{Binding Id}"
+                                    MouseLeftButtonUp="ServiceCard_MouseLeftButtonUp"
+                                    ToolTip="{Binding Url}">
+                                <Border.ContextMenu>
+                                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                        <MenuItem Header="Open in browser"
+                                                  Tag="{Binding Id}"
+                                                  Click="OpenInBrowser_Click">
+                                            <MenuItem.Icon>
+                                                <ui:SymbolIcon Symbol="Globe24" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Edit..."
+                                                  Tag="{Binding Id}"
+                                                  Click="EditService_Click">
+                                            <MenuItem.Icon>
+                                                <ui:SymbolIcon Symbol="Edit24" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <Separator />
+                                        <MenuItem Header="Delete"
+                                                  Tag="{Binding Id}"
+                                                  Click="DeleteService_Click">
+                                            <MenuItem.Icon>
+                                                <ui:SymbolIcon Symbol="Delete24" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </Border.ContextMenu>
+
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="130" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header area — no Background of its own; the outer
+                                         Border's gradient paints straight through.
+                                         Icon centred, tag chips float top-left. -->
+                                    <Grid Grid.Row="0">
+                                        <Image Source="{Binding Icon}"
+                                               Width="56" Height="56"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Margin="0,18,0,0"
+                                               RenderOptions.BitmapScalingMode="HighQuality">
+                                            <Image.Clip>
+                                                <RectangleGeometry Rect="0,0,56,56" RadiusX="12" RadiusY="12" />
+                                            </Image.Clip>
+                                        </Image>
+                                        <WrapPanel HorizontalAlignment="Left"
+                                                   VerticalAlignment="Top"
+                                                   Margin="10,10,10,0"
+                                                   MaxWidth="160"
+                                                   MaxHeight="22"
+                                                   Orientation="Horizontal"
+                                                   ClipToBounds="True">
+                                            <Border Style="{StaticResource HubTileBadge}"
+                                                    Visibility="{Binding HotkeyVisibility}">
+                                                <TextBlock Style="{StaticResource HubTileBadgeText}" Text="{Binding HotkeyText}" />
+                                            </Border>
+                                            <Border Style="{StaticResource HubTileBadge}"
+                                                    Visibility="{Binding ShortcutVisibility}">
+                                                <TextBlock Style="{StaticResource HubTileBadgeText}" Text="shortcut" />
+                                            </Border>
+                                            <Border Style="{StaticResource HubTileBadge}"
+                                                    Visibility="{Binding AutoStartVisibility}">
+                                                <TextBlock Style="{StaticResource HubTileBadgeText}" Text="autostart" />
+                                            </Border>
+                                            <Border Style="{StaticResource HubTileBadge}"
+                                                    Visibility="{Binding TranslatorVisibility}">
+                                                <TextBlock Style="{StaticResource HubTileBadgeText}" Text="{Binding TranslatorText}" />
+                                            </Border>
+                                            <Border Style="{StaticResource HubTileBadge}"
+                                                    Visibility="{Binding BadgeVisibility}">
+                                                <TextBlock Style="{StaticResource HubTileBadgeText}" Text="badge" />
+                                            </Border>
+                                            <Border Style="{StaticResource HubTileBadge}"
+                                                    Visibility="{Binding ProtocolVisibility}">
+                                                <TextBlock Style="{StaticResource HubTileBadgeText}" Text="{Binding ProtocolText}" />
+                                            </Border>
+                                        </WrapPanel>
+                                    </Grid>
+
+                                    <!-- Bottom content — Name / URL / ... button. No own
+                                         background; the outer Border's CardBackgroundFill
+                                         shows through, so the whole tile is one uniform
+                                         theme-aware Fluent card plate (matches the
+                                         CardControl / ResponsiveCard look used in Hub
+                                         Settings). -->
+                                    <Grid Grid.Row="1" Margin="16,12,8,14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontWeight="SemiBold" FontSize="15"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding UrlDisplay}"
+                                                           Foreground="{StaticResource HubTileSubtleTextBrush}"
+                                                           FontSize="11"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Margin="0,2,0,0" />
+                                            </StackPanel>
+
+                                        <ui:Button Grid.Column="1"
+                                                   Appearance="Transparent"
+                                                   Icon="{ui:SymbolIcon MoreHorizontal24}"
+                                                   Tag="{Binding Id}"
+                                                   Click="TileMenu_Click"
+                                                   Padding="6"
+                                                   VerticalAlignment="Center"
+                                                   ToolTip="More" />
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <ui:Card x:Name="EmptyState" Visibility="Collapsed" Padding="40">
+                    <StackPanel HorizontalAlignment="Center">
+                        <ui:SymbolIcon Symbol="Apps24" FontSize="36"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       HorizontalAlignment="Center" />
+                        <TextBlock Text="No services yet" FontSize="16" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,12,0,0" />
+                        <TextBlock Text="Click 'Add service' to set up your first web app."
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Margin="0,4,0,0" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </ui:Card>
+            </StackPanel>
+        </ui:DynamicScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource ControlFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="0,1,0,0" Padding="24,8">
+            <TextBlock x:Name="FooterText"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       FontSize="11" />
+        </Border>
+
+        <!-- ContentDialog overlay host — must span all rows so dialog
+             dims the entire window. -->
+        <ui:ContentDialogHost x:Name="DialogHost" Grid.RowSpan="4" />
+    </Grid>
+</ui:FluentWindow>

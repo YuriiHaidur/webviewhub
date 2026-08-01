@@ -1,0 +1,125 @@
+<Page x:Class="WebViewHub.Windows.Pages.WindowPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:controls="clr-namespace:WebViewHub.Controls"
+      Title="Window"
+      d:DesignHeight="450" d:DesignWidth="800"
+      ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+      ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+      mc:Ignorable="d">
+    <ui:DynamicScrollViewer VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="42">
+            <ui:TextBlock FontTypography="Title" Text="Window" />
+            <ui:TextBlock FontTypography="Body"
+                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                          Text="Size, taskbar, and tray behavior"
+                          Margin="0,4,0,24" />
+
+            <ui:CardExpander Margin="0,0,0,4" Icon="{ui:SymbolIcon ArrowMaximize24}" IsExpanded="True">
+                <ui:CardExpander.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="Window size" />
+                        <ui:TextBlock FontTypography="Caption"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      Text="{Binding WindowSizeDisplay}" />
+                    </StackPanel>
+                </ui:CardExpander.Header>
+
+                <StackPanel>
+                    <controls:ResponsiveCard Icon="{ui:SymbolIcon ArrowAutofitWidth24}"
+                                             Title="Width">
+                        <ui:NumberBox Width="280"
+                                      Value="{Binding WindowWidth, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                                      Minimum="300" Maximum="5000"
+                                      SmallChange="10" SpinButtonPlacementMode="Inline"
+                                      ClearButtonEnabled="False" MaxDecimalPlaces="0" />
+                    </controls:ResponsiveCard>
+                    <controls:ResponsiveCard Margin="0,4,0,0"
+                                             Icon="{ui:SymbolIcon ArrowAutofitHeight24}"
+                                             Title="Height">
+                        <ui:NumberBox Width="280"
+                                      Value="{Binding WindowHeight, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                                      Minimum="300" Maximum="5000"
+                                      SmallChange="10" SpinButtonPlacementMode="Inline"
+                                      ClearButtonEnabled="False" MaxDecimalPlaces="0" />
+                    </controls:ResponsiveCard>
+                    <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Save24}">
+                        <ui:CardControl.Header>
+                            <StackPanel>
+                                <ui:TextBlock FontTypography="Body" Text="Remember position &amp; size" />
+                                <ui:TextBlock FontTypography="Caption"
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                              Text="Reopen exactly where you left it last time" />
+                            </StackPanel>
+                        </ui:CardControl.Header>
+                        <ui:ToggleSwitch IsChecked="{Binding RememberWindowState}" />
+                    </ui:CardControl>
+                    <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon AlignCenterHorizontal24}">
+                        <ui:CardControl.Header>
+                            <StackPanel>
+                                <ui:TextBlock FontTypography="Body" Text="Always open centered" />
+                                <ui:TextBlock FontTypography="Caption"
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                              Text="Ignore last position and land at the screen center every time" />
+                            </StackPanel>
+                        </ui:CardControl.Header>
+                        <ui:ToggleSwitch IsChecked="{Binding OpenCentered}" />
+                    </ui:CardControl>
+                </StackPanel>
+            </ui:CardExpander>
+
+            <ui:CardControl Margin="0,0,0,4" Icon="{ui:SymbolIcon TableBottomRow24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="Show in taskbar" />
+                        <ui:TextBlock FontTypography="Caption"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      Text="Hide the taskbar button" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding ShowInTaskbar}" />
+            </ui:CardControl>
+
+            <ui:CardExpander Margin="0,0,0,4" Icon="{ui:SymbolIcon TrayItemAdd24}">
+                <ui:CardExpander.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <ui:TextBlock FontTypography="Body" Text="Hide to tray" />
+                            <ui:TextBlock FontTypography="Caption"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          Text="Send the window to the system tray instead of the taskbar" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1"
+                                         IsChecked="{Binding HideToTrayMaster}"
+                                         Margin="16,0,16,0"
+                                         PreviewMouseLeftButtonDown="HeaderToggle_PreviewMouseLeftButtonDown" />
+                    </Grid>
+                </ui:CardExpander.Header>
+
+                <StackPanel>
+                    <ui:CardControl Icon="{ui:SymbolIcon ArrowMinimize24}">
+                        <ui:CardControl.Header>
+                            <ui:TextBlock FontTypography="Body" Text="When you minimize" />
+                        </ui:CardControl.Header>
+                        <ui:ToggleSwitch IsChecked="{Binding MinimizeToTray}" />
+                    </ui:CardControl>
+                    <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Dismiss24}">
+                        <ui:CardControl.Header>
+                            <ui:TextBlock FontTypography="Body" Text="When you close (X)" />
+                        </ui:CardControl.Header>
+                        <ui:ToggleSwitch IsChecked="{Binding CloseToTray}" />
+                    </ui:CardControl>
+                </StackPanel>
+            </ui:CardExpander>
+        </StackPanel>
+    </ui:DynamicScrollViewer>
+</Page>

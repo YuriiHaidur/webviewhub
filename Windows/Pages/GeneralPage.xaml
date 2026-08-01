@@ -1,0 +1,148 @@
+<Page x:Class="WebViewHub.Windows.Pages.GeneralPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:controls="clr-namespace:WebViewHub.Controls"
+      xmlns:m="clr-namespace:WebViewHub.Models"
+      Title="General"
+      d:DesignHeight="450" d:DesignWidth="800"
+      ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+      ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+      mc:Ignorable="d">
+    <ui:DynamicScrollViewer VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="42">
+            <ui:TextBlock FontTypography="Title" Text="General" />
+            <ui:TextBlock FontTypography="Body"
+                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                          Text="How this service shows up and starts"
+                          Margin="0,4,0,24" />
+
+            <ui:TextBlock FontTypography="BodyStrong" Text="Service" Margin="0,0,0,8" />
+
+            <controls:ResponsiveCard Margin="0,0,0,4"
+                                     Icon="{ui:SymbolIcon Tag24}"
+                                     Title="Name"
+                                     Description="Used for window title, taskbar, Start menu shortcut">
+                <ui:TextBox Width="280"
+                            PlaceholderText="Slack, Gmail, ChatGPT…"
+                            Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+            </controls:ResponsiveCard>
+
+            <!-- Inline error: appears under the Name field when the chosen
+                 Name collides with another existing service. Bound to the
+                 same Draft property as the Save tooltip uses. -->
+            <ui:TextBlock FontTypography="Caption"
+                          Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                          Text="{Binding NameConflictHint}"
+                          Visibility="{Binding NameConflictHint, Converter={StaticResource StringNotEmptyToVisible}}"
+                          Margin="56,2,0,8" />
+
+            <controls:ResponsiveCard Margin="0,0,0,4"
+                                     Icon="{ui:SymbolIcon Globe24}"
+                                     Title="URL"
+                                     Description="Page that loads when service opens">
+                <ui:TextBox Width="280"
+                            PlaceholderText="https://example.com"
+                            Text="{Binding Url, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+            </controls:ResponsiveCard>
+
+            <controls:ResponsiveCard Margin="0,0,0,4"
+                                     Icon="{ui:SymbolIcon Window24}"
+                                     Title="Browser"
+                                     Description="Pretend to be desktop, mobile, or a custom browser">
+                <ComboBox Width="280"
+                          SelectedValue="{Binding UserAgent}"
+                          SelectedValuePath="Tag">
+                    <ComboBoxItem Content="Desktop"       Tag="{x:Static m:UserAgentMode.Desktop}" />
+                    <ComboBoxItem Content="Mobile iPhone" Tag="{x:Static m:UserAgentMode.MobileIPhone}" />
+                    <ComboBoxItem Content="Tablet iPad"   Tag="{x:Static m:UserAgentMode.TabletIPad}" />
+                    <ComboBoxItem Content="Custom"        Tag="{x:Static m:UserAgentMode.Custom}" />
+                </ComboBox>
+            </controls:ResponsiveCard>
+
+            <controls:ResponsiveCard Margin="0,0,0,4"
+                                     Title="Custom user agent"
+                                     Description="The exact User-Agent string sent to the site"
+                                     Visibility="{Binding UserAgent, Converter={StaticResource UserAgentIsCustomToVisibility}}">
+                <ui:TextBox Width="280"
+                            FontFamily="Cascadia Mono, Consolas"
+                            PlaceholderText="Mozilla/5.0…"
+                            Text="{Binding CustomUserAgent, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+            </controls:ResponsiveCard>
+
+            <controls:ResponsiveCard Margin="0,0,0,4"
+                                     Title="Icon"
+                                     Description="Pick an app icon from macOSicons.com by name (requires API key in Hub settings)">
+                <controls:ResponsiveCard.Icon>
+                    <!-- Live preview of the current/pending service icon.
+                         32×32 with rounded corners matching the iOS app-icon
+                         squircle proportion. -->
+                    <Image Source="{Binding IconPreview}"
+                           Width="32" Height="32"
+                           RenderOptions.BitmapScalingMode="HighQuality">
+                        <Image.Clip>
+                            <RectangleGeometry Rect="0,0,32,32" RadiusX="7" RadiusY="7" />
+                        </Image.Clip>
+                    </Image>
+                </controls:ResponsiveCard.Icon>
+                <ui:Button Content="Choose…"
+                           Appearance="Secondary"
+                           Icon="{ui:SymbolIcon Image24}"
+                           Click="ChooseIcon_Click" />
+            </controls:ResponsiveCard>
+
+            <ui:CardControl Margin="0,0,0,4" Icon="{ui:SymbolIcon AppsAddIn24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="Add to Start menu" />
+                        <ui:TextBlock FontTypography="Caption"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      Text="Find this service from Windows Search and Start" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding HasShortcut}" />
+            </ui:CardControl>
+
+            <ui:TextBlock FontTypography="BodyStrong" Text="Launch" Margin="0,24,0,8" />
+
+            <ui:CardExpander Icon="{ui:SymbolIcon Power24}">
+                <ui:CardExpander.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <ui:TextBlock FontTypography="Body" Text="Start automatically with Windows" />
+                            <ui:TextBlock FontTypography="Caption"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          Text="Runs at Windows sign-in" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1"
+                                         IsChecked="{Binding AutoStart}"
+                                         Margin="16,0,16,0"
+                                         PreviewMouseLeftButtonDown="HeaderToggle_PreviewMouseLeftButtonDown" />
+                    </Grid>
+                </ui:CardExpander.Header>
+
+                <StackPanel>
+                    <ui:CardControl Icon="{ui:SymbolIcon EyeOff24}">
+                        <ui:CardControl.Header>
+                            <StackPanel>
+                                <ui:TextBlock FontTypography="Body" Text="Launch hidden" />
+                                <ui:TextBlock FontTypography="Caption"
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                              Text="Sit silently in the tray instead of opening" />
+                            </StackPanel>
+                        </ui:CardControl.Header>
+                        <ui:ToggleSwitch IsChecked="{Binding StartMinimized}" />
+                    </ui:CardControl>
+                </StackPanel>
+            </ui:CardExpander>
+        </StackPanel>
+    </ui:DynamicScrollViewer>
+</Page>

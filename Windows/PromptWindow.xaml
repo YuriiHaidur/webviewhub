@@ -1,0 +1,52 @@
+<ui:FluentWindow x:Class="WebViewHub.Windows.PromptWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 x:Name="Root"
+                 Title="WebViewHub"
+                 Width="460" SizeToContent="Height"
+                 ResizeMode="NoResize"
+                 ShowInTaskbar="False"
+                 WindowBackdropType="Mica"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowStartupLocation="CenterOwner"
+                 ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+                 ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                 Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Height="32"
+                     Title="{Binding Title, ElementName=Root}"
+                     ShowMaximize="False" ShowMinimize="False" />
+
+        <StackPanel Grid.Row="1" Margin="20,4,20,20">
+            <TextBlock x:Name="MessageText"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+            <ui:TextBox x:Name="InputBox"
+                        Margin="0,12,0,0"
+                        MaxLength="40"
+                        KeyDown="InputBox_KeyDown" />
+
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,20,0,0">
+                <ui:Button x:Name="PrimaryButton"
+                           Content="OK"
+                           MinWidth="96"
+                           Appearance="Primary"
+                           Click="Primary_Click" />
+                <ui:Button Content="Cancel"
+                           MinWidth="96"
+                           Margin="8,0,0,0"
+                           IsCancel="True"
+                           Click="Cancel_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

@@ -1,0 +1,113 @@
+<ui:FluentWindow x:Class="WebViewHub.Windows.ServiceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="Loading..."
+        Height="800" Width="1200"
+        WindowStartupLocation="CenterScreen"
+        ExtendsContentIntoTitleBar="True"
+        FontFamily="Segoe UI Variable, Segoe UI">
+    <Window.Resources>
+        <!-- Compact icon button used inside the title bar. No visible border
+             at rest, subtle hover fill, matches Fluent button conventions
+             without the heavier ui:Button padding. -->
+        <Style x:Key="TitleBarIconButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background"
+                                        Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bg" Property="Background"
+                                        Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0"
+                     Height="32"
+                     Title="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="{Binding Icon, RelativeSource={RelativeSource AncestorType=Window}}" />
+            </ui:TitleBar.Icon>
+
+            <!-- Header sits between the icon and the title text in WPF-UI's
+                 default TitleBar layout, giving us a leading toolbar slot
+                 (logo · settings · back · forward · …title…) just like the
+                 Edge / Brave reference layout. -->
+            <ui:TitleBar.Header>
+                <StackPanel x:Name="TitleBarButtonPanel" Orientation="Horizontal" Margin="0" VerticalAlignment="Center">
+                    <Button Style="{StaticResource TitleBarIconButton}"
+                            Click="SettingsButton_Click"
+                            ToolTip="Menu">
+                        <ui:SymbolIcon x:Name="SettingsIcon" Symbol="Settings24" FontSize="16" />
+                    </Button>
+                    <Button x:Name="BackButton"
+                            Style="{StaticResource TitleBarIconButton}"
+                            Click="BackButton_Click"
+                            IsEnabled="False"
+                            ToolTip="Back">
+                        <ui:SymbolIcon x:Name="BackIcon" Symbol="ArrowLeft24" FontSize="16" />
+                    </Button>
+                    <Button x:Name="ForwardButton"
+                            Style="{StaticResource TitleBarIconButton}"
+                            Click="ForwardButton_Click"
+                            IsEnabled="False"
+                            ToolTip="Forward">
+                        <ui:SymbolIcon x:Name="ForwardIcon" Symbol="ArrowRight24" FontSize="16" />
+                    </Button>
+                </StackPanel>
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
+
+        <Grid Grid.Row="1">
+            <wv2:WebView2 x:Name="WebView" />
+
+            <!-- Tiny overlay shown until WebView2 finishes initializing -->
+            <Border x:Name="LoadingOverlay" Background="{DynamicResource ApplicationBackgroundBrush}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="Loading..." FontSize="16"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- No ContentDialogHost here on purpose. WebView2 is an HwndHost,
+             and WPF cannot draw above one — a ContentDialog centred over the
+             page renders behind it while still swallowing WPF input, which
+             leaves the title bar dead and nothing visible on screen. Prompts
+             from this window go through PromptWindow (its own HWND). -->
+    </Grid>
+</ui:FluentWindow>
