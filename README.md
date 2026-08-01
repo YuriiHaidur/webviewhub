@@ -110,12 +110,20 @@ A few things in the code look odd until you know why:
 - **`SetForegroundWindow` alone is refused** when the process lacks foreground
   privilege; activation goes through the `AttachThreadInput` workaround.
 
-## Built with
+## Stack
 
-[WPF-UI](https://github.com/lepoco/wpfui) for Fluent controls,
-[WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) for the
-embedded browser, and [H.NotifyIcon](https://github.com/HavenDV/H.NotifyIcon)
-for tray icons.
+| | |
+|---|---|
+| **Language / runtime** | C# 12, .NET 8 (`net8.0-windows`), nullable enabled |
+| **UI** | WPF + [WPF-UI](https://github.com/lepoco/wpfui) 4.3.0 — Fluent controls, Mica backdrop, live light/dark theming |
+| **Browser engine** | [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) 1.0.2792.45 — the Edge runtime already on Windows, not a bundled Chromium |
+| **Tray** | [H.NotifyIcon.Wpf](https://github.com/HavenDV/H.NotifyIcon) 2.0.124 |
+| **Tests** | xUnit 2.9.2 |
+| **Interop** | Win32 P/Invoke for hotkeys (`RegisterHotKey`), the low-level keyboard hook (`WH_KEYBOARD_LL`), taskbar identity (`SHGetPropertyStoreForWindow`), DPI-aware icons (`WM_SETICON`) and DWM window cloaking |
+| **Storage** | Plain JSON on disk (`System.Text.Json`) — no database, no cloud, no telemetry sent anywhere |
+
+No Electron, no Node toolchain, no bundled browser: the build output is a WPF
+executable plus the three NuGet packages above.
 
 ## License
 
