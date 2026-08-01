@@ -1,66 +1,47 @@
 # WebViewHub
 
-Run web apps as native Windows windows — each in its own window, with its own
-tray icon, hotkey and login session. Built on WebView2, so there is no bundled
-Chromium: the app reuses the Edge runtime that ships with Windows.
+Each web app runs in its own Windows window, with its own tray icon, hotkey and
+login session. Uses the WebView2 runtime that ships with Windows instead of
+bundling a browser, so the install stays small and memory scales with the pages
+you actually open.
 
-![The hub, listing configured services with their hotkeys and integrations](assets/hub.png)
+![The hub, listing configured services](assets/hub.png)
 
-> **Status:** personal project, published as-is. It works well enough for daily
-> use, but there is no installer, no release pipeline and no support promise.
->
-> **Vibe coded.** This was built by prompting an AI (Claude), with the design
-> decisions, testing and review done by hand. It reads like that in places —
-> heavy comments, uneven idiom, more explanation than a human would leave
-> behind. The behaviour it describes has been verified against a real 15-service
-> setup, but treat the code as what it is: a working personal tool, not a
-> reference implementation. Corrections are welcome.
+Personal project, published as is. There is no installer, no release pipeline
+and no support.
 
-## Why
-
-Wrapping a handful of web apps (Slack, Gmail, ChatGPT, Spotify…) usually means
-running an Electron-based hub, and every one of those carries its own copy of
-Chromium. WebViewHub leans on WebView2 instead — one shared browser runtime,
-already present on Windows 10/11 — which keeps the install small and the
-memory footprint proportional to the pages you actually have open.
+Written mostly by prompting Claude. Design decisions, testing and review were
+done by hand, but the code shows its origin in places, mainly in comment
+density.
 
 ## Features
 
-**Windows, not tabs.** Every service gets a real window with its own taskbar
-entry, tray icon and position. Peek mode hides a window as soon as it loses
-focus, so a global hotkey turns any service into a quick overlay.
-
-**Multiple accounts per service.** Each service can hold several profiles —
-separate cookie jars, separate logins. Switch between them from the gear menu
-in the title bar. Useful when the site itself has no account switcher.
-
-**Global hotkeys.** Bind a shortcut per service to toggle its window. There is
-also a double-Ctrl+C trigger that opens a translator with whatever you just
-copied.
-
-**Unread badges.** Parse the page title with a regex to pull out an unread
-count, then render it on the tray icon and as a taskbar overlay.
-
-**Per-service custom CSS.** Inject your own stylesheet, optionally only in dark
-mode. Handles UserCSS syntax (`@-moz-document`, `@var`) so styles from
-userstyles.world mostly work as-is.
-
-**Native-looking icons.** Icons are fetched from the site, WebCatalog or
-macOSicons, then normalised: transparent borders cropped, squircle mask
-applied, multi-frame `.ico` generated so Windows can pick a DPI-matched frame.
-
-**Portable.** Config, logs, icons and browser profiles all live in `Data/` next
-to the executable. Nothing is written to `%APPDATA%` or the registry, apart
-from the optional autostart entry and protocol registrations you enable
-yourself.
+- One window per service, each with its own taskbar entry, tray icon and saved
+  position
+- Peek mode: the window hides when it loses focus, so a hotkey turns a service
+  into an overlay
+- Multiple accounts per service, each in a separate WebView2 profile, switched
+  from the title bar menu
+- A global hotkey per service. Double Ctrl+C opens a translator with the copied
+  text
+- Unread counts parsed from the page title with a regex, drawn on the tray icon
+  and as a taskbar overlay
+- Custom CSS per service, optionally only in dark mode. Handles UserCSS syntax
+  (`@-moz-document`, `@var`), so most styles from userstyles.world work as-is
+- Icons pulled from the site, WebCatalog or macOSicons, then cropped, masked and
+  written as a multi-frame `.ico` so Windows picks a DPI-matched frame
+- Portable: config, logs, icons and browser profiles live in `Data/` next to the
+  executable. Nothing else is written outside it except the autostart entry and
+  protocol registrations, if you enable them
 
 ## Requirements
 
 - Windows 10 1809 or newer
-- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
-- WebView2 Runtime — preinstalled on Windows 11 and current Windows 10;
-  otherwise available from
-  [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/)
+- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0),
+  unless you use the self-contained build from
+  [Releases](https://github.com/YuriiHaidur/webviewhub/releases)
+- WebView2 Runtime, preinstalled on Windows 11 and current Windows 10, otherwise
+  from [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/)
 
 ## Build
 
@@ -70,60 +51,63 @@ cd webviewhub
 dotnet build WebViewHub.csproj -c Release
 ```
 
-The executable lands in `bin/Release/net8.0-windows/WebViewHub.exe`. Run it
-from there — it creates `Data/` alongside itself on first launch.
-
-Tests:
+The executable lands in `bin/Release/net8.0-windows/`. Run it from there; it
+creates `Data/` alongside itself on first launch.
 
 ```powershell
 dotnet test WebViewHub.Tests/WebViewHub.Tests.csproj
 ```
 
-## How it fits together
+## Layout
 
-| Area | Where |
+| Area | Files |
 |---|---|
-| Startup, single-instance, WebView2 environment | `App.xaml.cs` |
+| Startup, single instance, WebView2 environment | `App.xaml.cs` |
 | Window lifecycle, hub, profile switching | `Services/WindowManager.cs` |
-| Per-service window, WebView2 host, tray icon | `Windows/ServiceWindow.xaml.cs` |
+| Service window, WebView2 host, tray icon | `Windows/ServiceWindow.xaml.cs` |
 | Config model and per-service settings | `Models/Models.cs` |
 | Icon fetch, normalisation, `.ico` generation | `Helpers/IconHelper.cs`, `Services/FaviconService.cs` |
 | Global hotkeys, low-level keyboard hook | `Services/HotkeyManager.cs`, `Services/LowLevelKeyboardHook.cs` |
 
-Services are isolated by WebView2 *profile*: one shared
-`CoreWebView2Environment` with a per-profile `ProfileName`, so cookies and
-storage never cross between services or between accounts of the same service.
+Services are isolated by WebView2 profile: one shared `CoreWebView2Environment`
+with a per-profile `ProfileName`. Cookies and storage never cross between
+services, or between accounts of the same service.
 
-## Notable constraints
+## Implementation notes
 
-A few things in the code look odd until you know why:
+Four things in the code look wrong until you know the constraint behind them.
 
-- **`ProfileName` is fixed when the WebView2 controller is created.** Switching
-  accounts therefore rebuilds the window rather than swapping the session in
-  place.
-- **WebView2 is an `HwndHost`.** WPF cannot draw above it, so overlay dialogs
-  are separate windows — a `ContentDialog` centred over the page renders
-  *behind* it while still capturing input.
-- **The low-level keyboard hook needs its own thread and a non-blocking
-  logger.** A blocking write inside the hook callback makes Windows drop
-  keystrokes system-wide.
-- **`SetForegroundWindow` alone is refused** when the process lacks foreground
-  privilege; activation goes through the `AttachThreadInput` workaround.
+`ProfileName` is fixed when the WebView2 controller is created and cannot be
+changed afterwards. Switching accounts therefore rebuilds the window instead of
+swapping the session in place.
+
+WebView2 is an `HwndHost`, and WPF cannot draw above one. A `ContentDialog`
+centred over the page renders behind it while still capturing WPF input, which
+looks like a freeze: the page keeps working and the title bar goes dead. Prompts
+are separate windows for that reason.
+
+The low-level keyboard hook runs on its own thread and the logger never blocks.
+A blocking write inside the hook callback makes Windows drop keystrokes
+system-wide.
+
+`SetForegroundWindow` is refused when the process lacks foreground privilege,
+which is the normal case when a hook rather than a registered hotkey triggered
+the call. Activation goes through `AttachThreadInput`.
 
 ## Stack
 
 | | |
 |---|---|
-| **Language / runtime** | C# 12, .NET 8 (`net8.0-windows`), nullable enabled |
-| **UI** | WPF + [WPF-UI](https://github.com/lepoco/wpfui) 4.3.0 — Fluent controls, Mica backdrop, live light/dark theming |
-| **Browser engine** | [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) 1.0.2792.45 — the Edge runtime already on Windows, not a bundled Chromium |
-| **Tray** | [H.NotifyIcon.Wpf](https://github.com/HavenDV/H.NotifyIcon) 2.0.124 |
-| **Tests** | xUnit 2.9.2 |
-| **Interop** | Win32 P/Invoke for hotkeys (`RegisterHotKey`), the low-level keyboard hook (`WH_KEYBOARD_LL`), taskbar identity (`SHGetPropertyStoreForWindow`), DPI-aware icons (`WM_SETICON`) and DWM window cloaking |
-| **Storage** | Plain JSON on disk (`System.Text.Json`) — no database, no cloud, no telemetry sent anywhere |
+| Language, runtime | C# 12, .NET 8 (`net8.0-windows`), nullable enabled |
+| UI | WPF with [WPF-UI](https://github.com/lepoco/wpfui) 4.3.0 for Fluent controls, Mica backdrop and runtime theme switching |
+| Browser | [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) 1.0.2792.45 |
+| Tray | [H.NotifyIcon.Wpf](https://github.com/HavenDV/H.NotifyIcon) 2.0.124 |
+| Tests | xUnit 2.9.2 |
+| Interop | Win32 P/Invoke: `RegisterHotKey`, `WH_KEYBOARD_LL`, `SHGetPropertyStoreForWindow`, `WM_SETICON`, DWM cloaking |
+| Storage | JSON files via `System.Text.Json`. No database, no network calls except icon fetching |
 
-No Electron, no Node toolchain, no bundled browser: the build output is a WPF
-executable plus the three NuGet packages above.
+Build output is a WPF executable plus the three NuGet packages above. No
+Electron, no Node toolchain.
 
 ## License
 
