@@ -6,6 +6,13 @@ Chromium: the app reuses the Edge runtime that ships with Windows.
 
 > **Status:** personal project, published as-is. It works well enough for daily
 > use, but there is no installer, no release pipeline and no support promise.
+>
+> **Vibe coded.** This was built by prompting an AI (Claude), with the design
+> decisions, testing and review done by hand. It reads like that in places —
+> heavy comments, uneven idiom, more explanation than a human would leave
+> behind. The behaviour it describes has been verified against a real 15-service
+> setup, but treat the code as what it is: a working personal tool, not a
+> reference implementation. Corrections are welcome.
 
 ## Why
 
